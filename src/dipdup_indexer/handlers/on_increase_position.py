@@ -15,11 +15,19 @@ async def on_increase_position(
 ) -> None:
     user_address = increase_position.data.sender_address
     user_balance = transfer.storage.balances.get(user_address, '0').balance
+    
     try:
         user = await models.User.get(address=user_address)
         user.balance = user_balance
     except DoesNotExist:
         user = await models.User.create(address=user_address, balance=user_balance)
+
+    marked_price = increase_position.storage.current_mark_price
+    await models.MarkedPrice.create(
+        timestamp=increase_position.data.timestamp,
+        price=marked_price,
+    )
+
 
     try:
         increasePosition = await models.IncreasePosition.get(id=increase_position.data.id)
